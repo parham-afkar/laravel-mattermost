@@ -4,10 +4,10 @@ namespace ParhamAfkar\MattermostLogger;
 
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
-use GuzzleHttp\Client;
 use Monolog\LogRecord;
+use GuzzleHttp\Client;
 
-class MattermostHandler extends AbstractProcessingHandler
+class MattermostWebhookHandler extends AbstractProcessingHandler
 {
     protected string $webhookUrl;
     protected string $channel;
@@ -32,18 +32,10 @@ class MattermostHandler extends AbstractProcessingHandler
             return;
         }
 
-        $message = $record->formatted ?? $record->message;
-        $level = strtoupper($record->level->getName());
-        $context = $record->context;
-
-        $text = "**[$level]** {$message}";
-
-        if (!empty($context)) {
-            $text .= "\n```\n" . json_encode($context, JSON_PRETTY_PRINT) . "\n```";
-        }
+        $message = $this->formatMessage($record);
 
         $payload = [
-            'text' => $text,
+            'text' => $message,
             'username' => $this->username,
         ];
 
@@ -60,8 +52,22 @@ class MattermostHandler extends AbstractProcessingHandler
                 'timeout' => 2,
             ]);
         } catch (\Exception $e) {
-            \Log::channel("single")->error('Exception caught: ' . $e->getMessage());
+            \Log::channel("single")->error('Mattermost Webhook Error: ' . $e->getMessage());
         }
     }
 
+    protected function formatMessage(LogRecord $record): string
+    {
+        $message = $record->formatted ?? $record->message;
+        $level = strtoupper($record->level->getName());
+        $context = $record->context;
+
+        $text = "**[$level]** {$message}";
+
+        if (!empty($context)) {
+            $text .= "\n```json\n" . json_encode($context, JSON_PRETTY_PRINT) . "\n```";
+        }
+
+        return $text;
+    }
 }

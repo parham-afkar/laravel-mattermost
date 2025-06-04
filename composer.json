@@ -1,6 +1,6 @@
 {
-    "name": "parhamafkar/laravel-mattermost-logger",
-    "description": "Laravel 11 package to log all system logs to Mattermost",
+    "name": "parhamafkar/laravel-mattermost",
+    "description": "Laravel package to log messages to Mattermost using both Bot API and Webhooks",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -13,18 +13,23 @@
         "php": "^8.2",
         "illuminate/support": "^11.0",
         "monolog/monolog": "^3.0",
-        "guzzlehttp/guzzle": "^7.0"
+        "guzzlehttp/guzzle": "^7.0",
+        "illuminate/http": "^11.0"
     },
     "autoload": {
         "psr-4": {
-            "ParhamAfkar\\MattermostLogger\\": "src/"
+            "ParhamAfkar\\MattermostLogger\\": "src/",
+            "ParhamAfkar\\MattermostLogger\\Facades\\": "Facades/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
                 "ParhamAfkar\\MattermostLogger\\MattermostServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "Mattermost": "ParhamAfkar\\MattermostLogger\\Facades\\Mattermost"
+            }
         }
     },
     "minimum-stability": "stable"
