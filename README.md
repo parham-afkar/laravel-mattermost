@@ -65,13 +65,30 @@ All logs will be sent to `MATTERMOST_CHANNEL=errors` by default once the stack i
 However, you can also send logs manually anywhere in your application. For example, in a controller:
 
 ```php
+<?php
+
+namespace App\Http\Controllers;
+
 use ParhamAfkar\MattermostLogger\Facades\Mattermost;
 
-Mattermost::channel('errors')->error('Error', [
-    'user_id' => 1,
-    'request' => 'test',
-]);
+class MyController extends Controller
+{
+    public function index()
+    {
+        Mattermost::channel('errors')->error('Error message', [
+            'user_id' => 1,
+            'request' => "test",
+        ]);
 
-Mattermost::channel('exceptions')->exception($e);
-Mattermost::channel('debug')->debug('Debug', []);
+        Mattermost::channel('debug')->info('Info message', [
+            'user_id' => 1,
+            'request' => "test",
+        ]);
+
+        Mattermost::channel('exceptions')->exception($e);
+
+        // warning
+        // debug
+    }
+}
 ```
