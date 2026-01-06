@@ -1,13 +1,16 @@
 # Laravel Mattermost Logger
 
-This Laravel package is designed to support both **bot** and **webhook** integrations with Mattermost.  
-It supports sending logs to a custom channel for each log action, allowing more control and visibility.
+A Laravel logging package that supports **Mattermost Bot** and **Incoming Webhook** integrations.
+
+This package allows you to:
+- Send Laravel logs directly to Mattermost
+- Dynamically choose a Mattermost channel per log entry
+- Use either Bot API or Webhook connections
+- Control log visibility and structure with context data
 
 ---
 
 ## 📦 Installation
-
-Install the package using Composer:
 
 ```bash
 composer require parhamafkar/laravel-mattermost
@@ -17,26 +20,29 @@ composer require parhamafkar/laravel-mattermost
 
 ## ⚙️ Configuration
 
-### 1. Publish the config file
+### 1. Publish configuration file
 
 ```bash
-php artisan vendor:publish --tag=config
+php artisan vendor:publish --tag=mattermost-config
 ```
 
-### 2. Add the custom log driver to `config/logging.php`
+---
+
+### 2. Add custom log driver
 
 ```php
 'mattermost' => [
     'driver' => 'custom',
-    'via' => ParhamAfkar\MattermostLogger\Mattermost::class,
-    'level' => 'debug',
-    'webhook_url' => env('MATTERMOST_WEBHOOK_URL'),
-    'channel' => env('MATTERMOST_CHANNEL'),
-    'username' => env('MATTERMOST_USERNAME', 'Mattermost'),
+    'via' => ParhamAfkar\MattermostLogger\LogChannel::class,
+    'level' => env('MATTERMOST_LOG_LEVEL', 'debug'),
+    'channel' => env('MATTERMOST_CHANNEL', 'town-square'),
+    'type' => env('MATTERMOST_TYPE', 'bot'),
 ],
 ```
 
-### 3. Update the stack channel in `config/logging.php`
+---
+
+### 3. Add Mattermost to stack channel
 
 ```php
 'stack' => [
@@ -45,50 +51,80 @@ php artisan vendor:publish --tag=config
 ],
 ```
 
-### 4. Add the following variables to your `.env` file
+---
+
+### 4. Environment variables
 
 ```env
-MATTERMOST_BASE_URL="https://xyz.mattermost.xyz"
-MATTERMOST_BOT_TOKEN="<bot-token>"
-MATTERMOST_BOT_USERNAME="Parham-Bot"
-MATTERMOST_WEBHOOK_URL=https://xyz.mattermost.xyz/hooks/<incoming-hooks-token>
-MATTERMOST_TYPE=bot # bot or webhook
-MATTERMOST_CHANNEL=errors
-MATTERMOST_CHANNEL_PREFIX="develop-" # output: develop-errors
+MATTERMOST_TYPE=bot
+MATTERMOST_BASE_URL=https://xyz.mattermost.xyz
+MATTERMOST_BOT_TOKEN=your-bot-token-here
+MATTERMOST_CHANNEL_PREFIX="develop-"
+
+MATTERMOST_WEBHOOK_URL=https://xyz.mattermost.xyz/hooks/your-webhook-token
+
+MATTERMOST_CHANNEL=town-square
+MATTERMOST_USERNAME="Laravel Logger"
+MATTERMOST_ICON_URL=
+MATTERMOST_LOG_LEVEL=debug
 ```
 
 ---
 
 ## ✅ Usage
 
-All logs will be sent to `MATTERMOST_CHANNEL=errors` by default once the stack is configured.  
-However, you can also send logs manually anywhere in your application. For example, in a controller:
+### Facade
 
 ```php
-<?php
-
-namespace App\Http\Controllers;
-
-use ParhamAfkar\MattermostLogger\Facades\Mattermost;
-
-class MyController extends Controller
-{
-    public function index()
-    {
-        Mattermost::channel('errors')->error('Error message', [
-            'user_id' => 1,
-            'request' => "test",
-        ]);
-
-        Mattermost::channel('debug')->info('Info message', [
-            'user_id' => 1,
-            'request' => "test",
-        ]);
-
-        Mattermost::channel('exceptions')->exception($e);
-
-        // warning
-        // debug
-    }
-}
+Mattermost::send('Hello from Laravel!');
+Mattermost::channel('errors')->send('Error message', [
+    'user_id' => 1,
+]);
 ```
+
+---
+
+### Laravel Log
+
+```php
+Log::channel('mattermost')->info('User logged in', [
+    'channel' => 'user-activity',
+]);
+```
+
+---
+
+## 🧪 Artisan Commands
+
+```bash
+php artisan mattermost:test
+php artisan mattermost:test --channel=errors
+php artisan mattermost:channels
+```
+
+---
+
+## 📋 Available Methods
+
+```php
+Mattermost::send(string $message, array $context = []);
+Mattermost::channel(string $channel)->send(string $message, array $context = []);
+Mattermost::type('webhook')->send(string $message, array $context = []);
+```
+
+---
+
+## 🔧 Channel Resolution
+
+Supports:
+- Channel name
+- Channel ID
+- Prefixed channel ID
+
+Private channels require bot membership.
+
+---
+
+## 📄 License
+
+MIT
